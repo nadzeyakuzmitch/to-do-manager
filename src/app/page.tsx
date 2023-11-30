@@ -179,7 +179,7 @@ function Card({ onUpdateItem, onDeleteItem, item, className }: { onUpdateItem: (
   }
 
   /** Returns card color based on the status */
-  function getStatusColor(): string {
+  function getStatusBorderColor(): string {
     if (isOverdue()) {
       return 'border-danger';
     }
@@ -210,7 +210,7 @@ function Card({ onUpdateItem, onDeleteItem, item, className }: { onUpdateItem: (
 
   return (
     <>
-      <div className={`${className} border ${getStatusColor()} rounded p-3`}>
+      <div className={`${className} border ${getStatusBorderColor()} rounded p-3`}>
         <div className="card-body">
           <div className="d-flex">
             <h5 className="card-title m-0">{item.title}</h5>
