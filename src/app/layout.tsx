@@ -16,7 +16,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <script src="https://kit.fontawesome.com/f74168ccc8.js" aria-hidden crossOrigin="anonymous"></script>
+        {children}
+      </body>
     </html>
   )
 }
