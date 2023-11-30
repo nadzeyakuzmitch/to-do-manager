@@ -3,12 +3,12 @@
 import { FormEvent, useEffect, useState } from "react";
 
 
-/** Items list class */
+/** Items list class that is saved to local storage */
 interface ItemsList {
   items: ToDoItem[];
 }
 
-/** Item class */
+/** To Do Item class that we store */
 interface ToDoItem {
   title: string;
   due: string;
@@ -17,6 +17,7 @@ interface ToDoItem {
   id: string;
 }
 
+/** Function to create unique id's for items (source: https://www.geeksforgeeks.org/how-to-create-a-guid-uuid-in-javascript/) */
 function createUniqueId() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,
     function (c) {
@@ -25,12 +26,17 @@ function createUniqueId() {
     });
 }
 
+/** Main layout for the home page */
 export default function Home() {
 
+  /** State variable to indicate if we are in the create new mode (shows create new form if true) */
   const [isCreatingNew, setIsCreatingNew] = useState(false);
+  /** State variable that we use to display items we have */
   const [toDosList, setToDosList] = useState([] as ToDoItem[]);
 
+  /** Using useEffect to wait untill we can access localStorage */
   useEffect(() => {
+    /** Getting user notes from the localStorage, if undefined then set it to an empty array */
     const userNotes = localStorage.getItem('userNotes');
     if (!userNotes) {
       const newNotesArray = { items: [] } as ItemsList;
@@ -41,20 +47,24 @@ export default function Home() {
     }
   }, []);
 
+  /** Clean click cleans local storage and update state variable */
   function onCleanClick() {
     const newNotesArray = { items: [] };
     localStorage.setItem('userNotes', JSON.stringify(newNotesArray));
     setToDosList([]);
   }
 
+  /** Sets state variable with a newly added item */
   function onAddNew() {
     setToDosList(JSON.parse(localStorage.getItem('userNotes') as string).items);
   }
 
+  /** Updates state variable to show create new form */
   function onCreateNew(status: boolean) {
     setIsCreatingNew(status);
   }
 
+  /** Update specific item in both localStorage and state variable */
   function onUpdateItem(toDoItem: ToDoItem) {
     const newNotesArray = { items: JSON.parse(localStorage.getItem('userNotes') as string).items };
     newNotesArray.items[newNotesArray.items.findIndex((item: ToDoItem) => item.id === toDoItem.id)] = { ...toDoItem };
@@ -62,6 +72,7 @@ export default function Home() {
     setToDosList(newNotesArray.items);
   }
 
+  /** Deletes item by id from localStorage and state variable */
   function onDeleteItem(id: string) {
     const newNotesArray = { items: JSON.parse(localStorage.getItem('userNotes') as string).items };
     newNotesArray.items.splice(newNotesArray.items.findIndex((item: ToDoItem) => item.id === id), 1)
@@ -73,13 +84,22 @@ export default function Home() {
     <>
       <div className="p-3 m-auto" style={{ maxWidth: '400px' }}>
 
-        <span className="display-5 d-flex w-100 align-items-center justify-content-center py-2 pb-3">To-Do Manager</span>
+        <span className="display-5 d-flex w-100 align-items-center justify-content-center py-2 pb-3">
+          To-Do Manager
+        </span>
 
-        <button type="button" className="btn btn-outline-secondary mb-3 w-100" onClick={onCleanClick}>Clear All To-Dos <i className="fa-solid fa-spray-can-sparkles"></i></button>
-        <button type="button" className="btn btn-outline-primary mb-3 w-100 d-flex flex-column align-items-center justify-content-center" onClick={() => onCreateNew(true)}>I Need To-Do... <i className="fa-solid fa-file-circle-plus"></i></button>
+        <button type="button" className="btn btn-outline-secondary mb-3 w-100" onClick={onCleanClick}>
+          Clear All To-Dos <i className="fa-solid fa-spray-can-sparkles"></i>
+        </button>
 
+        <button type="button" className="btn btn-outline-primary mb-3 w-100 d-flex flex-column align-items-center justify-content-center" onClick={() => onCreateNew(true)}>
+          I Need To-Do... <i className="fa-solid fa-file-circle-plus"></i>
+        </button>
+
+        {/* If in creating new state then showing create new form */}
         {isCreatingNew ? <NewCard onAddNew={onAddNew} onCancel={() => onCreateNew(false)} className="mb-3" /> : ''}
 
+        {/* Mapping our items list with Card component and binding functions to it */}
         {toDosList.map((toDoItem: ToDoItem, index: number) => (<>
           <Card onUpdateItem={onUpdateItem} onDeleteItem={onDeleteItem} key={`${index}-item`} item={toDoItem} className="mb-3" />
         </>))}
@@ -89,15 +109,18 @@ export default function Home() {
   )
 }
 
-
+/** Create new item form component */
 function NewCard({ onAddNew, onCancel, className }: { onAddNew: () => void, onCancel: () => void, className?: string }) {
 
+  /** Functions for sunmitting a new item */
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    /* Getting data from the form */
     const formData = new FormData(event.currentTarget);
     const params = [...formData as any];
 
+    /* Creating a new item */
     const newToDo: ToDoItem = {
       title: params[0][1],
       due: params[1][1],
@@ -106,12 +129,15 @@ function NewCard({ onAddNew, onCancel, className }: { onAddNew: () => void, onCa
       id: createUniqueId()
     }
 
+    /* Adding that item to localStorage and state variable */
     const userNotes = JSON.parse(localStorage.getItem('userNotes') as string);
     userNotes.items.unshift(newToDo);
     localStorage.setItem('userNotes', JSON.stringify(userNotes));
 
+    /* Resetting the form */
     (event.target as HTMLFormElement).reset();
 
+    /* Notifying the parent component that we've created an item */
     onAddNew();
   }
 
@@ -144,13 +170,15 @@ function NewCard({ onAddNew, onCancel, className }: { onAddNew: () => void, onCa
   )
 }
 
-
+/** To Do Card component */
 function Card({ onUpdateItem, onDeleteItem, item, className }: { onUpdateItem: (toDoItem: ToDoItem) => void, onDeleteItem: (id: string) => void, item: ToDoItem, className?: string }) {
 
+  /** Function to check if item is overdue and not completed */
   function isOverdue(): boolean {
     return new Date(item.due).getTime() < new Date().getTime() && item.status !== 2;
   }
 
+  /** Returns card color based on the status */
   function getStatusColor(): string {
     if (isOverdue()) {
       return 'border-danger';
@@ -169,11 +197,13 @@ function Card({ onUpdateItem, onDeleteItem, item, className }: { onUpdateItem: (
     return '';
   }
 
+  /** Updates item status and notifies parent component about it */
   function updateStatus(status: number): void {
     item.status = status;
     onUpdateItem({ ...item, status })
   }
 
+  /** Deleted item and notifies parent component about it */
   function deleteToDo(): void {
     onDeleteItem(item.id);
   }
